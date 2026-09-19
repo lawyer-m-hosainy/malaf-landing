@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserIntentProvider, useUserIntent } from './context/UserIntentContext';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
@@ -18,6 +18,7 @@ import FloatingWhatsAppButton from './components/FloatingWhatsAppButton';
 import Footer from './components/Footer';
 import ThankYouModal from './components/ThankYouModal';
 import { LeadFormData } from './types';
+import { installWhatsAppLeadTracking } from './utils/tracking';
 
 const DEFAULT_PACKAGE = 'basic';
 const DEFAULT_DESIGN = 'design-1-classic-navy';
@@ -27,6 +28,9 @@ function MainAppContent() {
   const [selectedDesign, setSelectedDesign] = useState<string>(DEFAULT_DESIGN);
   const [submittedLead, setSubmittedLead] = useState<LeadFormData | null>(null);
   const { setDesignById, setPackageById } = useUserIntent();
+
+  // Report a Meta Pixel "Lead" on every WhatsApp click anywhere on the page
+  useEffect(() => installWhatsAppLeadTracking(), []);
 
   const handleFormSuccess = (newLead: LeadFormData) => {
     setSubmittedLead(newLead);

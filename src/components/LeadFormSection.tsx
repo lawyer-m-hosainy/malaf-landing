@@ -22,6 +22,7 @@ import { LAWYER_DESIGNS } from '../data/designsData';
 import { LeadFormData } from '../types';
 import { useUserIntent } from '../context/UserIntentContext';
 import { getWhatsAppUrl } from '../utils/whatsappTemplates';
+import { trackLead } from '../utils/tracking';
 
 interface LeadFormSectionProps {
   selectedPackage: string;
@@ -158,7 +159,8 @@ export default function LeadFormSection({
       });
     }
 
-    // 3. Open WhatsApp with the ready message (this is how the request reaches us)
+    // 3. Conversion event, then open WhatsApp with the ready message (this is how the request reaches us)
+    trackLead('form', { package: selectedPackage, specialty: leadData.specialty });
     const opened = window.open(waUrl, '_blank', 'noopener,noreferrer');
     if (!opened) {
       // Popup blocked → navigate in the same tab
