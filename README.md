@@ -42,8 +42,6 @@ npm run lint       # فحص الأنواع (tsc)
 
 ## قبل النشر
 
-- **صورة المشاركة (OG)**: `public/og-image.jpg` موجودة (1200×630). فيسبوك يحتاج رابطاً مطلقاً، فبعد معرفة الدومين النهائي غيّر
-  `content="/og-image.jpg"` في `index.html` إلى `https://your-domain/og-image.jpg`، وأضف
-  `<link rel="canonical" href="https://your-domain/" />`.
+- **الموقع المنشور**: https://malaf-landing.vercel.app — مربوط بـ GitHub (`lawyer-m-hosainy/malaf-landing`)، أي push على `main` بيتنشر تلقائياً. لو ربطت دومين خاص، غيّر الروابط المطلقة في `index.html` (canonical + og:url + og:image).
 - **Meta Pixel / Google Analytics**: أضف كود التتبع في `index.html` قبل `</head>` لقياس التحويلات من إعلانات فيسبوك.
 - **النشر**: مشروع Vite ثابت — يعمل مباشرة على Vercel / Netlify / Cloudflare Pages (أمر البناء `npm run build`، مجلد الإخراج `dist`).
