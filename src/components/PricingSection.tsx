@@ -86,6 +86,9 @@ export default function PricingSection({ onSelectPackage }: PricingSectionProps)
                     <div className="text-xs text-emerald-700 font-bold mt-1 bg-emerald-50 px-2.5 py-1 rounded-md inline-block border border-emerald-200">
                       وفر {parseInt(pkg.originalPrice.replace(/\D/g, '')) - parseInt(pkg.price.replace(/\D/g, ''))} ج.م في هذا العرض الخاص!
                     </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5">
+                      💡 السعر = <strong className="text-slate-800">التصميم والبرمجة فقط</strong>. الدومين والاستضافة تُحتسب بسعرها الفعلي لدى مزوّديها (نطاق فرعي على malaf.pro مجاناً).
+                    </p>
                   </div>
 
                   {/* Features List with Rich Lawyer Tooltips */}
