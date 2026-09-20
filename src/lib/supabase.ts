@@ -8,8 +8,19 @@ import { createClient } from '@supabase/supabase-js';
 export const SUPABASE_URL = 'https://cjdgnvghggpzlkpvmgmz.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_IctAABO7VFd-fH-27YFisw_4O7GsA0K';
 
+/**
+ * supabase-js sends "application/json;charset=UTF-8"; the auth server on this project
+ * rejects the charset suffix ("Missing Content-Type header"), so normalise it here.
+ */
+const normalisedFetch: typeof fetch = (input, init) => {
+  const headers = new Headers(init?.headers);
+  if ((headers.get('content-type') || '').startsWith('application/json')) headers.set('content-type', 'application/json');
+  return fetch(input, { ...init, headers });
+};
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' },
+  global: { fetch: normalisedFetch },
 });
 
 export type OrderStatus = 'new' | 'building' | 'preview' | 'paid' | 'delivered' | 'cancelled';
