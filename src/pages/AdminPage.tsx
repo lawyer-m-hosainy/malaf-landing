@@ -40,6 +40,15 @@ function Login() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  async function google() {
+    setErr(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/admin` },
+    });
+    if (error) setErr(error.message);
+  }
+
   async function send(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -65,7 +74,11 @@ function Login() {
           </p>
         ) : (
           <>
-            <p className="text-xs text-slate-500">الدخول برابط يُرسل إلى إيميلك — بدون كلمة سر.</p>
+            <button type="button" onClick={google} className="w-full py-3 rounded-xl bg-white border border-slate-300 hover:border-slate-400 text-slate-900 font-bold text-sm inline-flex items-center justify-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.2 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-3.7-13.6-9l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
+              الدخول بحساب Google
+            </button>
+            <div className="flex items-center gap-2 text-[11px] text-slate-400"><span className="flex-1 h-px bg-slate-200" />أو برابط على الإيميل<span className="flex-1 h-px bg-slate-200" /></div>
             <input
               type="email"
               dir="ltr"
