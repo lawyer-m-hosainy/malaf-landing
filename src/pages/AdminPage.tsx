@@ -274,7 +274,13 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
   );
 
   const wa = (text: string) => `https://wa.me/2${phone}?text=${encodeURIComponent(text)}`;
-  const msgPreview = `أستاذ/ة ${L.displayName || ''}، نسخة المعاينة من موقعكم جاهزة: ${previewUrl || '[رابط المعاينة]'}\nتصفّحها من الموبايل والكمبيوتر، وابعتلنا أي تعديلات. بعد موافقتك نحوّلها على الدومين ونسلّمها خلال يوم عمل.`;
+  const PRICES: Record<string, string> = { basic: '500', pro: '1,200', vip: '2,500' };
+  const payLine =
+    order.package === 'basic'
+      ? `بعد موافقتك يُسدَّد مبلغ ${PRICES.basic} ج.م (إنستاباي / فودافون كاش) وننشر الموقع على دومينك خلال يوم عمل.`
+      : `بعد موافقتك تُسدَّد الدفعة الثانية (50% المتبقية من ${PRICES[order.package] || ''} ج.م) وننشر الموقع على دومينك خلال يوم عمل.`;
+  const msgPreview = `أستاذ/ة ${L.displayName || ''}، نسخة المعاينة من موقعكم جاهزة: ${previewUrl || '[رابط المعاينة]'}
+تصفّحها من الموبايل والكمبيوتر، وابعتلنا أي تعديلات. ${payLine}`;
   const msgDelivered = `مبروك! موقعكم أصبح منشوراً على: ${liveUrl || `https://${slug}.malaf.pro`}\nأي تعديل على النصوص أو الصور خلال أول 7 أيام مجاناً — ابعتهولنا هنا.`;
 
 
