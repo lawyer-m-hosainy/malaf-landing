@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '#pricing', label: 'الأسعار' },
   { href: '#portfolio', label: 'أنماط التصميم' },
   { href: '#faq', label: 'الأسئلة الشائعة' },
+  { href: '/order', label: 'اطلب موقعك' },
 ];
 
 export default function Header() {

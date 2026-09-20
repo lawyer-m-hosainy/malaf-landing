@@ -213,6 +213,11 @@ export default function PricingSection({ onSelectPackage }: PricingSectionProps)
         <p className="mt-8 max-w-4xl mx-auto text-center text-xs sm:text-sm text-slate-600 leading-relaxed bg-white/70 border border-amber-200 rounded-2xl px-5 py-4">
           📌 <strong className="text-slate-800">ملاحظة:</strong> {DOMAIN_HOSTING_NOTE}
         </p>
+        <div className="mt-6 text-center">
+          <a href="/order" className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-950 text-white font-black text-sm sm:text-base hover:bg-slate-800 transition-colors">
+            املأ طلب موقعك الآن — المعاينة قبل الدفع ←
+          </a>
+        </div>
       </div>
     </section>
   );

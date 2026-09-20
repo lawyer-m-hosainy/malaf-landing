@@ -118,6 +118,10 @@ export default function ThankYouModal({ lead, onClose }: ThankYouModalProps) {
             </a>
           </div>
 
+          <a href="/order" className="block text-center text-xs font-bold text-amber-800 underline underline-offset-4">
+            أو املأ طلب الموقع الكامل الآن (بيانات المكتب والصور) ←
+          </a>
+
           {/* Assurance footer */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span className="flex items-center gap-1">
