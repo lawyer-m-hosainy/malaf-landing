@@ -1,5 +1,5 @@
 import { Check, X, ShieldCheck, CreditCard, Sparkles, Star, Zap, Info, Scale, HelpCircle, MessageCircle } from 'lucide-react';
-import { PRICING_PACKAGES, DOMAIN_HOSTING_NOTE, DELIVERY_TIME } from '../data/content';
+import { PRICING_PACKAGES, DOMAIN_HOSTING_NOTE, DELIVERY_TIME, PAYMENT_TERMS_BASIC, PAYMENT_TERMS_PRO } from '../data/content';
 import LawyerBenefitTooltip from './LawyerBenefitTooltip';
 import { getFeatureExplanation, FEATURE_EXPLANATIONS } from '../data/featureTooltips';
 import { useUserIntent } from '../context/UserIntentContext';
@@ -177,13 +177,15 @@ export default function PricingSection({ onSelectPackage }: PricingSectionProps)
               </div>
               <div className="text-right flex-1">
                 <div className="font-bold text-slate-950 text-sm sm:text-base flex items-center justify-between">
-                  <span>تسهيلات مرنة ومريحة في السداد</span>
+                  <span>الدفع بعد ما تشوف موقعك</span>
                   <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">
-                    معيار تعاقدي عادل
+                    100% قبل التسليم
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                  💳 مقدم 50% عند البدء، والباقي عند التسليم وموافقتك على الموقع.
+                  💳 {PAYMENT_TERMS_BASIC}
+                  <br />
+                  {PAYMENT_TERMS_PRO}
                 </div>
               </div>
             </div>

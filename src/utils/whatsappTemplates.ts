@@ -103,6 +103,7 @@ export function buildWhatsAppMessage(params: WhatsAppIntentParams): string {
       `⭐ التميز: ${pkg.badge}`,
       `📋 نبذة: ${packageSummary}`,
       `⚡ التسليم: 3 إلى 5 أيام عمل حسب الباقة + جولة تعديلات مجانية`,
+      pkg.id === 'basic' ? '💳 السداد: 100% بعد موافقتي على المعاينة وقبل النشر' : '💳 السداد: 50% عند البدء و50% قبل التسليم',
       `🔖 كود الباقة للمبيعات: [PKG-${pkg.id?.toUpperCase() || 'BASIC'}]`,
       notes ? `📝 تفاصيل إضافية: ${notes}` : '',
       '--------------------------------',
