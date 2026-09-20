@@ -42,6 +42,84 @@ function suggestSlug(name: string, phone: string) {
 }
 
 export default function OrderPage() {
+  // ?code=XXXXXX → the lawyer already ordered via the WhatsApp bot; only collect logo/photo.
+  const attachCode = new URLSearchParams(window.location.search).get('code')?.toUpperCase() || '';
+  if (/^[A-Z0-9]{6}$/.test(attachCode)) return <AttachAssets code={attachCode} />;
+  return <FullOrderForm />;
+}
+
+function AttachAssets({ code }: { code: string }) {
+  const [logo, setLogo] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function upload(file: File, name: string) {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${code}/${name}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('order-assets').upload(path, file, { upsert: false, contentType: file.type });
+    if (upErr) throw new Error('تعذّر رفع الصورة: ' + upErr.message);
+    return supabase.storage.from('order-assets').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!logo && !photo) return setError('اختر الشعار أو الصورة على الأقل');
+    for (const f of [logo, photo]) if (f && f.size > MAX_MB * 1024 * 1024) return setError(`حجم الملف أكبر من ${MAX_MB} ميجا`);
+    setBusy(true);
+    setError(null);
+    try {
+      const assets: Record<string, string> = {};
+      if (logo) assets.logo = await upload(logo, 'logo');
+      if (photo) assets.photo = await upload(photo, 'photo');
+      const { data, error: rpcErr } = await supabase.rpc('attach_order_assets', { p_code: code, p_assets: assets });
+      if (rpcErr || !data) throw new Error('كود الطلب غير صحيح أو الطلب تم تسليمه بالفعل — راسلنا على واتساب');
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ، حاول مرة أخرى');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Shell>
+      <div className="max-w-lg mx-auto bg-white rounded-3xl border border-amber-300/60 shadow-xl p-6 sm:p-8 space-y-5 text-right">
+        <h1 className="text-2xl font-black text-slate-950">أضف شعارك وصورتك</h1>
+        <p className="text-sm text-slate-600">
+          للطلب رقم <span className="font-mono font-black text-amber-700" dir="ltr">{code}</span>. الخطوة اختيارية — بدون شعار نصمم علامة نصية أنيقة باسم مكتبك.
+        </p>
+        {done ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 text-sm font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" /> تم استلام الصور وإضافتها لطلبك. شكراً!
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            <Field label="شعار المكتب" hint="PNG / SVG / JPG حتى 8 ميجا">
+              <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
+                <Upload className="w-4 h-4" /> {logo ? logo.name : 'اختر ملف'}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLogo(e.target.files?.[0] || null)} />
+              </label>
+            </Field>
+            <Field label="صورتك الشخصية" hint="تظهر في صفحة «من نحن»">
+              <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
+                <Upload className="w-4 h-4" /> {photo ? photo.name : 'اختر ملف'}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+              </label>
+            </Field>
+            {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{error}</p>}
+            <button disabled={busy} className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> جاري الرفع...</> : 'رفع الصور'}
+            </button>
+          </form>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
+function FullOrderForm() {
   const [form, setForm] = useState({
     officeName: '',
     displayName: '',
