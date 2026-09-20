@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { Scale, LogOut, RefreshCw, MessageCircle, ExternalLink, Download, Loader2, Copy, Check } from 'lucide-react';
+import { Scale, LogOut, RefreshCw, MessageCircle, ExternalLink, Download, Loader2, Copy, Check, Hammer, Rocket } from 'lucide-react';
 import { supabase, OrderRow, OrderStatus, STATUS_LABELS } from '../lib/supabase';
 import { THEMES, SPECIALTIES, PACKAGES } from '../data/orderOptions';
 import { BRAND_NAME } from '../data/content';
@@ -230,6 +230,20 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
     else onChange();
   }
 
+  /** Ask the cloud builder (Supabase function → GitHub Actions) to build or deliver this order */
+  async function build(deliver: boolean) {
+    if (deliver && !confirm(`نشر الموقع على ${slug}.malaf.pro وتسليمه؟ (بعد التأكد من الدفع)`)) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('build-order', { body: { code: order.code, deliver } });
+    setBusy(false);
+    if (error || data?.error) {
+      alert('تعذّر بدء البناء: ' + (data?.error || error?.message || 'خطأ غير معروف'));
+      return;
+    }
+    onChange();
+    alert(deliver ? 'بدأ النشر على الدومين — يستغرق 3–5 دقائق، اضغط تحديث بعدها.' : 'بدأ بناء المعاينة — يستغرق 3–5 دقائق، اضغط تحديث بعدها وهتلاقي الرابط.');
+  }
+
   const setStatus = (status: OrderStatus) => {
     const patch: Partial<OrderRow> = { status };
     if (status === 'paid') patch.paid_at = new Date().toISOString();
@@ -263,7 +277,6 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
   const msgPreview = `أستاذ/ة ${L.displayName || ''}، نسخة المعاينة من موقعكم جاهزة: ${previewUrl || '[رابط المعاينة]'}\nتصفّحها من الموبايل والكمبيوتر، وابعتلنا أي تعديلات. بعد موافقتك نحوّلها على الدومين ونسلّمها خلال يوم عمل.`;
   const msgDelivered = `مبروك! موقعكم أصبح منشوراً على: ${liveUrl || `https://${slug}.malaf.pro`}\nأي تعديل على النصوص أو الصور خلال أول 7 أيام مجاناً — ابعتهولنا هنا.`;
 
-  const next = FLOW[FLOW.indexOf(order.status) + 1];
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5 text-right">
@@ -305,11 +318,38 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
       </div>
       <label className="block text-sm"><span className="text-xs font-bold text-slate-600">ملاحظاتك</span><textarea className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" rows={2} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} onBlur={() => adminNotes !== (order.admin_notes || '') && save({ admin_notes: adminNotes || null })} /></label>
 
-      {/* Actions */}
+      {/* Cloud build */}
       <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-        {next && order.status !== 'cancelled' && (
-          <button disabled={busy} onClick={() => setStatus(next)} className="px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-black disabled:opacity-60">
-            ← {STATUS_LABELS[next]}
+        {(order.status === 'new' || order.status === 'preview') && (
+          <button disabled={busy} onClick={() => build(false)} className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black inline-flex items-center gap-1.5 disabled:opacity-60">
+            <Hammer className="w-3.5 h-3.5" /> {order.status === 'preview' ? 'إعادة بناء المعاينة' : 'بناء ومعاينة'}
+          </button>
+        )}
+        {order.status === 'paid' && (
+          <button disabled={busy} onClick={() => build(true)} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black inline-flex items-center gap-1.5 disabled:opacity-60">
+            <Rocket className="w-3.5 h-3.5" /> نشر على {slug}.malaf.pro وتسليم
+          </button>
+        )}
+        {order.status === 'building' && (
+          <span className="px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold inline-flex items-center gap-1.5">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> جاري البناء في السحابة (3–5 دقائق) — اضغط تحديث ↻
+          </span>
+        )}
+        {order.status === 'delivered' && liveUrl && (
+          <a href={liveUrl} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-black inline-flex items-center gap-1.5"><ExternalLink className="w-3.5 h-3.5" /> الموقع منشور</a>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2">
+        {order.status === 'preview' && (
+          <button disabled={busy} onClick={() => confirm('تأكيد استلام الدفع؟') && setStatus('paid')} className="px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-black disabled:opacity-60">
+            ✓ تم الدفع
+          </button>
+        )}
+        {order.status === 'building' && (
+          <button disabled={busy} onClick={() => confirm('إعادة الطلب لحالة «جديد»؟ (لو البناء فشل)') && setStatus('new')} className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold">
+            إعادة لـ «جديد»
           </button>
         )}
         {order.status === 'preview' && (
