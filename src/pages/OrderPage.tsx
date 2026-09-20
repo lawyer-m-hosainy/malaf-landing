@@ -88,7 +88,7 @@ export default function OrderPage() {
   async function upload(file: File, folder: string, name: string) {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${folder}/${name}.${ext}`;
-    const { error: upErr } = await supabase.storage.from('order-assets').upload(path, file, { upsert: true, contentType: file.type });
+    const { error: upErr } = await supabase.storage.from('order-assets').upload(path, file, { upsert: false, contentType: file.type });
     if (upErr) throw new Error('تعذّر رفع الصورة: ' + upErr.message);
     return supabase.storage.from('order-assets').getPublicUrl(path).data.publicUrl;
   }
@@ -133,20 +133,26 @@ export default function OrderPage() {
       // The code is generated here: anonymous visitors may insert but never read rows,
       // so a RETURNING clause would be rejected by row-level security.
       const code = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('');
-      const { error: insErr } = await supabase
-        .from('orders')
-        .insert({
-          code,
-          theme: form.theme,
-          package: form.package,
-          slug: suggestSlug(form.officeName, phone),
-          lawyer,
-          assets,
-          notes: form.notes.trim() || null,
-          source: window.location.href,
-          user_agent: navigator.userAgent,
-        });
-      if (insErr) throw new Error(insErr.message);
+      const baseSlug = suggestSlug(form.officeName, phone);
+      const row = {
+        code,
+        theme: form.theme,
+        package: form.package,
+        lawyer,
+        assets,
+        notes: form.notes.trim() || null,
+        source: window.location.href,
+        user_agent: navigator.userAgent,
+      };
+      // The subdomain suggestion must be unique; on a clash (same lawyer twice) add a short suffix.
+      let insErr = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`;
+        const res = await supabase.from('orders').insert({ ...row, slug });
+        insErr = res.error;
+        if (!insErr || insErr.code !== '23505') break;
+      }
+      if (insErr) throw new Error(insErr.code === '23505' ? 'هذا الطلب مسجّل بالفعل — راسلنا على واتساب لو محتاج تعديل' : insErr.message);
 
       trackLead('form', { package: form.package, order: true });
       setDone({ code });
@@ -335,7 +341,7 @@ export default function OrderPage() {
 
           <label className="flex items-start gap-2 text-xs text-slate-700">
             <input type="checkbox" className="mt-0.5" checked={form.consent} onChange={set('consent')} />
-            <span>أوافق على استخدام البيانات والصور المرسلة لإنشاء موقعي الإلكتروني فقط، وأقر بأن المحتوى لا يتضمن وعوداً بنتائج أو ما يخالف آداب مهنة المحاماة.</span>
+            <span>أوافق على استخدام البيانات والصور المرسلة لإنشاء موقعي الإلكتروني فقط وفق <a href="/privacy" className="underline text-amber-800" target="_blank">سياسة الخصوصية</a>، وأقر بأن المحتوى لا يتضمن وعوداً بنتائج أو ما يخالف آداب مهنة المحاماة.</span>
           </label>
 
           {error && (

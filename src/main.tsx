@@ -9,9 +9,10 @@ import './index.css';
 // vercel.json rewrites every path to index.html so deep links work.
 const OrderPage = lazyWithRetry(() => import('./pages/OrderPage.tsx'));
 const AdminPage = lazyWithRetry(() => import('./pages/AdminPage.tsx'));
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage.tsx'));
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
-const Page = path === '/order' ? OrderPage : path === '/admin' ? AdminPage : App;
+const Page = path === '/order' ? OrderPage : path === '/admin' ? AdminPage : path === '/privacy' ? PrivacyPage : App;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -124,7 +124,10 @@ export default function Footer() {
           <div>
             © {year} {BRAND_NAME} — جميع الحقوق محفوظة
           </div>
-          <div>صُنع للمحامين والمستشارين القانونيين في مصر</div>
+          <div className="flex items-center gap-3">
+            <a href="/privacy" className="underline hover:text-slate-900">سياسة الخصوصية</a>
+            <span>صُنع للمحامين والمستشارين القانونيين في مصر</span>
+          </div>
         </div>
       </div>
     </footer>
