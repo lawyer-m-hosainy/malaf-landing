@@ -1,5 +1,6 @@
 import { Check, X, ShieldCheck, CreditCard, Sparkles, Star, Zap, Info, Scale, HelpCircle, MessageCircle } from 'lucide-react';
-import { PRICING_PACKAGES, DOMAIN_HOSTING_NOTE, DELIVERY_TIME, PAYMENT_TERMS_BASIC, PAYMENT_TERMS_PRO } from '../data/content';
+import { PRICING_PACKAGES, DOMAIN_HOSTING_NOTE, DELIVERY_TIME, PAYMENT_TERMS_BASIC, PAYMENT_TERMS_PRO, BOT_ORDER_LINK } from '../data/content';
+import { trackLead } from '../utils/tracking';
 import LawyerBenefitTooltip from './LawyerBenefitTooltip';
 import { getFeatureExplanation, FEATURE_EXPLANATIONS } from '../data/featureTooltips';
 import { useUserIntent } from '../context/UserIntentContext';
@@ -221,6 +222,19 @@ export default function PricingSection({ onSelectPackage }: PricingSectionProps)
         <div className="mt-6 text-center">
           <a href="/order" className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-950 text-white font-black text-sm sm:text-base hover:bg-slate-800 transition-colors">
             املأ طلب موقعك الآن — المعاينة قبل الدفع ←
+          </a>
+          <p className="mt-4 text-xs sm:text-sm text-slate-600">
+            أو ابعت كلمة <strong className="text-slate-800">«طلب»</strong> لبوت مَلَف على واتساب وخلّص طلبك في 3 دقائق:
+          </p>
+          <a
+            href={BOT_ORDER_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackLead('whatsapp', { channel: 'bot' })}
+            className="mt-2 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border-2 border-emerald-300 text-emerald-800 font-bold text-sm hover:border-emerald-500 hover:bg-emerald-50 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" aria-hidden="true" />
+            ابدأ الطلب عبر البوت
           </a>
         </div>
       </div>

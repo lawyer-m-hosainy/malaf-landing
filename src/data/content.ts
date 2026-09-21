@@ -15,6 +15,12 @@ export const WHATSAPP_NUMBER = '201141973834';
 /** نفس الرقم بصيغة العرض المحلية */
 export const WHATSAPP_DISPLAY = '01141973834';
 
+/** رقم بوت الطلبات الآلي (يأخذ الطلب في دقائق بدون تدخّل بشري) */
+export const BOT_WHATSAPP_NUMBER = '201141971311';
+export const BOT_WHATSAPP_DISPLAY = '01141971311';
+/** رابط يفتح البوت ومعه كلمة البدء جاهزة */
+export const BOT_ORDER_LINK = `https://wa.me/${BOT_WHATSAPP_NUMBER}?text=${encodeURIComponent('طلب')}`;
+
 /** النموذج الحي الحقيقي الذي يمكن للزائر تصفحه */
 export const DEMO_URL = 'https://hosainy.pro';
 export const DEMO_LABEL = 'hosainy.pro';
