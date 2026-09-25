@@ -204,6 +204,7 @@ function Dashboard({ email }: { email: string }) {
 function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => void }) {
   const [busy, setBusy] = useState(false);
   const [slug, setSlug] = useState(order.slug || '');
+  const [customDomain, setCustomDomain] = useState(order.custom_domain || '');
   const [previewUrl, setPreviewUrl] = useState(order.preview_url || '');
   const [liveUrl, setLiveUrl] = useState(order.live_url || '');
   const [adminNotes, setAdminNotes] = useState(order.admin_notes || '');
@@ -211,10 +212,24 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
 
   useEffect(() => {
     setSlug(order.slug || '');
+    setCustomDomain(order.custom_domain || '');
     setPreviewUrl(order.preview_url || '');
     setLiveUrl(order.live_url || '');
     setAdminNotes(order.admin_notes || '');
-  }, [order.id, order.slug, order.preview_url, order.live_url, order.admin_notes]);
+  }, [order.id, order.slug, order.custom_domain, order.preview_url, order.live_url, order.admin_notes]);
+
+  // دومين المحامي الخاص (بند #20): بيتربط وقت التسليم جنب <slug>.malaf.pro
+  const hosts = `${slug}.malaf.pro${customDomain ? ` + ${customDomain}` : ''}`;
+  function saveCustomDomain() {
+    const host = customDomain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    setCustomDomain(host);
+    if (host === (order.custom_domain || '')) return;
+    if (host && (!/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/.test(host) || host.endsWith('.malaf.pro'))) {
+      alert('اكتب الدومين بس، زي ahmedlaw.com أو www.ahmedlaw.com');
+      return;
+    }
+    save({ custom_domain: host || null });
+  }
 
   const L = order.lawyer as Record<string, any>;
   const phone = String(L.whatsapp || L.phone || '');
@@ -232,7 +247,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
 
   /** Ask the cloud builder (Supabase function → GitHub Actions) to build or deliver this order */
   async function build(deliver: boolean) {
-    if (deliver && !confirm(`نشر الموقع على ${slug}.malaf.pro وتسليمه؟ (بعد التأكد من الدفع)`)) return;
+    if (deliver && !confirm(`نشر الموقع على ${hosts} وتسليمه؟ (بعد التأكد من الدفع)`)) return;
     setBusy(true);
     const { data, error } = await supabase.functions.invoke('build-order', { body: { code: order.code, deliver } });
     setBusy(false);
@@ -259,7 +274,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
         {
           slug: slug || order.slug,
           theme: order.theme,
-          domain: `https://${slug || order.slug}.malaf.pro`,
+          domain: customDomain ? `https://${customDomain}` : `https://${slug || order.slug}.malaf.pro`,
           package: order.package,
           lawyer: order.lawyer,
           assets: { logo: order.assets.logo || null, photo: order.assets.photo || null, hero: order.assets.hero || null },
@@ -270,7 +285,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
         null,
         2
       ),
-    [order, slug]
+    [order, slug, customDomain]
   );
 
   const wa = (text: string) => `https://wa.me/2${phone}?text=${encodeURIComponent(text)}`;
@@ -317,8 +332,9 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
         </div>
       )}
 
-      <div className="grid sm:grid-cols-3 gap-3 text-sm">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
         <label className="block"><span className="text-xs font-bold text-slate-600">النطاق الفرعي</span><input dir="ltr" className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} onBlur={() => slug !== order.slug && save({ slug })} /><span className="text-[10px] text-slate-400" dir="ltr">{slug}.malaf.pro</span></label>
+        <label className="block"><span className="text-xs font-bold text-slate-600">دومين خاص (اختياري)</span><input dir="ltr" className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs" value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} onBlur={saveCustomDomain} placeholder="ahmedlaw.com" /><span className="text-[10px] text-slate-400">بيتربط وقت التسليم — تعليمات الـ DNS بتظهر في ملاحظاتك</span></label>
         <label className="block"><span className="text-xs font-bold text-slate-600">رابط المعاينة</span><input dir="ltr" className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} onBlur={() => previewUrl !== (order.preview_url || '') && save({ preview_url: previewUrl || null })} placeholder="https://malaf-xxx.pages.dev" /></label>
         <label className="block"><span className="text-xs font-bold text-slate-600">الرابط النهائي</span><input dir="ltr" className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs" value={liveUrl} onChange={(e) => setLiveUrl(e.target.value)} onBlur={() => liveUrl !== (order.live_url || '') && save({ live_url: liveUrl || null })} placeholder={`https://${slug}.malaf.pro`} /></label>
       </div>
@@ -333,7 +349,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
         )}
         {order.status === 'paid' && (
           <button disabled={busy} onClick={() => build(true)} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black inline-flex items-center gap-1.5 disabled:opacity-60">
-            <Rocket className="w-3.5 h-3.5" /> نشر على {slug}.malaf.pro وتسليم
+            <Rocket className="w-3.5 h-3.5" /> نشر على {hosts} وتسليم
           </button>
         )}
         {order.status === 'building' && (

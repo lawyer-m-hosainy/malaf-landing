@@ -32,6 +32,7 @@ export interface OrderRow {
   updated_at: string;
   status: OrderStatus;
   slug: string | null;
+  custom_domain: string | null;
   theme: string;
   package: string;
   lawyer: Record<string, unknown>;
