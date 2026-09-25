@@ -7,6 +7,15 @@ import { trackLead } from '../utils/tracking';
 
 const EG_PHONE = /^01[0125]\d{8}$/;
 const MAX_MB = 8;
+// نفس الأنواع المسموحة في bucket order-assets؛ الامتداد بيتاخد من النوع الحقيقي مش من اسم الملف.
+const IMAGE_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const IMAGE_ACCEPT = Object.keys(IMAGE_EXT).join(',');
+const BAD_IMAGE_TYPE = 'الصورة لازم تكون JPG أو PNG أو WebP (صور الآيفون HEIC: افتحها وخد لقطة شاشة أو غيّر الإعداد لـ Most Compatible)';
+const imageExt = (file: File) => {
+  const ext = IMAGE_EXT[file.type];
+  if (!ext) throw new Error(BAD_IMAGE_TYPE);
+  return ext;
+};
 
 type TurnstileApi = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -116,7 +125,7 @@ function AttachAssets({ code }: { code: string }) {
   const [done, setDone] = useState(false);
 
   async function upload(file: File, name: string) {
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const ext = imageExt(file);
     const path = `${code}/${name}-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from('order-assets').upload(path, file, { upsert: false, contentType: file.type });
     if (upErr) throw new Error('تعذّر رفع الصورة: ' + upErr.message);
@@ -156,16 +165,16 @@ function AttachAssets({ code }: { code: string }) {
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <Field label="شعار المكتب" hint="PNG / SVG / JPG حتى 8 ميجا">
+            <Field label="شعار المكتب" hint="JPG / PNG / WebP حتى 8 ميجا">
               <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
                 <Upload className="w-4 h-4" /> {logo ? logo.name : 'اختر ملف'}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLogo(e.target.files?.[0] || null)} />
+                <input type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => setLogo(e.target.files?.[0] || null)} />
               </label>
             </Field>
             <Field label="صورتك الشخصية" hint="تظهر في صفحة «من نحن»">
               <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
                 <Upload className="w-4 h-4" /> {photo ? photo.name : 'اختر ملف'}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+                <input type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
               </label>
             </Field>
             {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{error}</p>}
@@ -216,6 +225,11 @@ function FullOrderForm() {
 
   const pickFile = (setter: (f: File | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
+    if (f && !IMAGE_EXT[f.type]) {
+      setError(BAD_IMAGE_TYPE);
+      e.target.value = '';
+      return;
+    }
     if (f && f.size > MAX_MB * 1024 * 1024) {
       setError(`حجم الملف أكبر من ${MAX_MB} ميجا`);
       e.target.value = '';
@@ -226,7 +240,7 @@ function FullOrderForm() {
   };
 
   async function upload(file: File, folder: string, name: string) {
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const ext = imageExt(file);
     const path = `${folder}/${name}.${ext}`;
     const { error: upErr } = await supabase.storage.from('order-assets').upload(path, file, { upsert: false, contentType: file.type });
     if (upErr) throw new Error('تعذّر رفع الصورة: ' + upErr.message);
@@ -432,16 +446,16 @@ function FullOrderForm() {
               <textarea className={input} rows={3} value={form.bio} onChange={set('bio')} />
             </Field>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="شعار المكتب (اختياري)" hint="PNG/SVG/JPG حتى 8 ميجا — بدون شعار نصمم علامة نصية أنيقة">
+              <Field label="شعار المكتب (اختياري)" hint="JPG/PNG/WebP حتى 8 ميجا — بدون شعار نصمم علامة نصية أنيقة">
                 <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
                   <Upload className="w-4 h-4" /> {logo ? logo.name : 'اختر ملف'}
-                  <input type="file" accept="image/*" className="hidden" onChange={pickFile(setLogo)} />
+                  <input type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={pickFile(setLogo)} />
                 </label>
               </Field>
               <Field label="صورتك الشخصية (اختياري)" hint="تظهر في صفحة «من نحن»">
                 <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-amber-400">
                   <Upload className="w-4 h-4" /> {photo ? photo.name : 'اختر ملف'}
-                  <input type="file" accept="image/*" className="hidden" onChange={pickFile(setPhoto)} />
+                  <input type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={pickFile(setPhoto)} />
                 </label>
               </Field>
             </div>
