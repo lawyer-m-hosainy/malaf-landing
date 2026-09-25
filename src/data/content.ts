@@ -48,6 +48,12 @@ export const PAYMENT_TERMS_PRO = 'باقتا المحترف والمكتب ال�
 
 export const WEBHOOK_URL = '';
 
+/**
+ * Cloudflare Turnstile — Site key (عام، آمن في المتصفح) لحماية نموذج /order من السبام.
+ * الـ Secret key المقابل في أسرار Supabase باسم TURNSTILE_SECRET (دالة submit-order).
+ */
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAFDW_xIJGiCT4_Id';
+
 export const WHATSAPP_DEFAULT_MESSAGE = `السلام عليكم ${BRAND_NAME}، أنا محامي وأود الاستفادة من عرض تصميم الموقع الشخصي بـ ${OFFER_PRICE} والتسليم خلال ${DELIVERY_TIME}.`;
 
 export const getWhatsAppLink = (customText?: string) => {

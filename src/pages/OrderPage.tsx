@@ -1,12 +1,72 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Scale, CheckCircle2, MessageCircle, Upload, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SPECIALTIES, CITIES, THEMES, PACKAGES } from '../data/orderOptions';
-import { BRAND_NAME, WHATSAPP_NUMBER, OFFER_PRICE, DELIVERY_TIME, DOMAIN_HOSTING_NOTE } from '../data/content';
+import { BRAND_NAME, WHATSAPP_NUMBER, OFFER_PRICE, DELIVERY_TIME, DOMAIN_HOSTING_NOTE, TURNSTILE_SITE_KEY } from '../data/content';
 import { trackLead } from '../utils/tracking';
 
 const EG_PHONE = /^01[0125]\d{8}$/;
 const MAX_MB = 8;
+
+type TurnstileApi = {
+  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+  reset: (id: string) => void;
+  remove: (id: string) => void;
+};
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+/** Cloudflare Turnstile ("أنا مش روبوت") — بيدّي توكن يستخدم مرة واحدة؛ resetKey يطلب توكن جديد بعد كل محاولة. */
+function Turnstile({ onToken, resetKey }: { onToken: (t: string | null) => void; resetKey: number }) {
+  const box = useRef<HTMLDivElement>(null);
+  const widget = useRef<string | null>(null);
+  const cb = useRef(onToken);
+  cb.current = onToken;
+
+  useEffect(() => {
+    let cancelled = false;
+    const mount = () => {
+      if (cancelled || !box.current || !window.turnstile || widget.current) return;
+      widget.current = window.turnstile.render(box.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        language: 'ar',
+        callback: (t: string) => cb.current(t),
+        'expired-callback': () => cb.current(null),
+        'error-callback': () => cb.current(null),
+      });
+    };
+    if (window.turnstile) mount();
+    else {
+      const id = 'cf-turnstile-script';
+      let s = document.getElementById(id) as HTMLScriptElement | null;
+      if (!s) {
+        s = document.createElement('script');
+        s.id = id;
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.async = true;
+        document.head.appendChild(s);
+      }
+      s.addEventListener('load', mount);
+    }
+    return () => {
+      cancelled = true;
+      if (widget.current && window.turnstile) window.turnstile.remove(widget.current);
+      widget.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (resetKey && widget.current && window.turnstile) {
+      cb.current(null);
+      window.turnstile.reset(widget.current);
+    }
+  }, [resetKey]);
+
+  return <div ref={box} className="flex justify-center min-h-[65px]" />;
+}
 
 type Field = { label: string; hint?: string; required?: boolean; children: React.ReactNode };
 const Field = ({ label, hint, required, children }: Field) => (
@@ -145,6 +205,8 @@ function FullOrderForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ code: string } | null>(null);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value }));
@@ -183,6 +245,7 @@ function FullOrderForm() {
     if (!form.consent) return setError('يرجى الموافقة على استخدام البيانات لإنشاء الموقع');
     const city = form.city === 'أخرى' ? form.otherCity.trim() : form.city;
     if (!city) return setError('اكتب اسم المدينة');
+    if (!captcha) return setError('استنى ثانية لحد ما علامة التحقق (أنا مش روبوت) تظهر ✓ وبعدين اضغط إرسال');
 
     setSubmitting(true);
     try {
@@ -208,29 +271,31 @@ function FullOrderForm() {
         workingHours: form.workingHours.trim(),
       };
 
-      // The code is generated here: anonymous visitors may insert but never read rows,
-      // so a RETURNING clause would be rejected by row-level security.
-      const code = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('');
-      const baseSlug = suggestSlug(form.officeName, phone);
-      const row = {
-        code,
+      // الطلب بيتسجّل عن طريق دالة submit-order (تحقق Turnstile + حدود السبام)، وهي اللي بتولّد الكود
+      // وتضيف لاحقة للنطاق المقترح لو اتكرر.
+      const order = {
         theme: form.theme,
         package: form.package,
+        slug: suggestSlug(form.officeName, phone),
         lawyer,
         assets,
         notes: form.notes.trim() || null,
         source: window.location.href,
         user_agent: navigator.userAgent,
       };
-      // The subdomain suggestion must be unique; on a clash (same lawyer twice) add a short suffix.
-      let insErr = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`;
-        const res = await supabase.from('orders').insert({ ...row, slug });
-        insErr = res.error;
-        if (!insErr || insErr.code !== '23505') break;
+      const { data, error: fnErr } = await supabase.functions.invoke('submit-order', { body: { token: captcha, order } });
+      if (fnErr || !data?.code) {
+        let msg = 'حدث خطأ أثناء الإرسال، حاول مرة أخرى أو راسلنا على واتساب';
+        try {
+          const detail = await (fnErr as { context?: Response })?.context?.json();
+          if (detail?.error) msg = detail.error;
+        } catch {
+          /* keep the generic message */
+        }
+        setCaptchaReset((n) => n + 1); // التوكن اتستخدم — نطلب واحد جديد للمحاولة الجاية
+        throw new Error(msg);
       }
-      if (insErr) throw new Error(insErr.code === '23505' ? 'هذا الطلب مسجّل بالفعل — راسلنا على واتساب لو محتاج تعديل' : insErr.message);
+      const code = data.code as string;
 
       trackLead('form', { package: form.package, order: true });
       setDone({ code });
@@ -421,6 +486,8 @@ function FullOrderForm() {
             <input type="checkbox" className="mt-0.5" checked={form.consent} onChange={set('consent')} />
             <span>أوافق على استخدام البيانات والصور المرسلة لإنشاء موقعي الإلكتروني فقط وفق <a href="/privacy" className="underline text-amber-800" target="_blank">سياسة الخصوصية</a>، وأقر بأن المحتوى لا يتضمن وعوداً بنتائج أو ما يخالف آداب مهنة المحاماة.</span>
           </label>
+
+          <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
 
           {error && (
             <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
