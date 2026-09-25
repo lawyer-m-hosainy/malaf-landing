@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
-import { FAQ_ITEMS } from '../data/content';
+import { FAQ_ITEMS, getWhatsAppLink } from '../data/content';
 
 export default function FaqSection() {
   const [openId, setOpenId] = useState<string | null>(FAQ_ITEMS[0].id);
@@ -22,7 +22,7 @@ export default function FaqSection() {
             أسئلة بتيجيلنا كتير من المحامين
           </h2>
           <p className="text-slate-600 text-base sm:text-lg">
-            كل ما يدور بذهنك بخصوص الاستلام والأسعار والتقنية والدعم الفني
+            المدة، والدفع، والتعديلات، والدومين، وجوجل
           </p>
         </div>
 
@@ -72,10 +72,12 @@ export default function FaqSection() {
             عندك استفسار خاص بقضية معينة أو متطلبات محددة لمكتبك؟
           </p>
           <a
-            href="#contact-form"
-            className="mt-2 inline-block font-bold text-amber-600 hover:text-amber-700 underline text-sm"
+            href={getWhatsAppLink('السلام عليكم مَلَف، عندي سؤال قبل ما أطلب موقعي:')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block font-bold text-amber-700 hover:text-amber-800 underline text-sm"
           >
-            تواصل معنا مباشرة وسنجيبك خلال دقائق ←
+            اسألنا على واتساب ←
           </a>
         </div>
       </div>

@@ -208,6 +208,12 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
   const [previewUrl, setPreviewUrl] = useState(order.preview_url || '');
   const [liveUrl, setLiveUrl] = useState(order.live_url || '');
   const [adminNotes, setAdminNotes] = useState(order.admin_notes || '');
+  // فريق المكتب (باقة المكتب المتكامل): سطر لكل عضو "الاسم — الصفة — نبذة" → content.about.team في الموقع المولَّد
+  const teamOf = (o: OrderRow) =>
+    (((o.content?.about as { team?: Array<{ name: string; title?: string; bio?: string }> })?.team) ?? [])
+      .map((m) => [m.name, m.title, m.bio].filter(Boolean).join(' — '))
+      .join('\n');
+  const [teamText, setTeamText] = useState(teamOf(order));
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -216,7 +222,20 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
     setPreviewUrl(order.preview_url || '');
     setLiveUrl(order.live_url || '');
     setAdminNotes(order.admin_notes || '');
-  }, [order.id, order.slug, order.custom_domain, order.preview_url, order.live_url, order.admin_notes]);
+    setTeamText(teamOf(order));
+  }, [order.id, order.slug, order.custom_domain, order.preview_url, order.live_url, order.admin_notes, order.content]);
+
+  function saveTeam() {
+    if (teamText === teamOf(order)) return;
+    const team = teamText
+      .split('\n')
+      .map((line) => line.split(/\s+[—–-]\s+/).map((s) => s.trim()))
+      .filter(([name]) => name)
+      .map(([name, title, ...bio]) => ({ name, ...(title ? { title } : {}), ...(bio.length ? { bio: bio.join(' — ') } : {}) }));
+    const content = (order.content || {}) as Record<string, unknown>;
+    const about = (content.about || {}) as Record<string, unknown>;
+    save({ content: { ...content, about: { ...about, team } } });
+  }
 
   // دومين المحامي الخاص (بند #20): بيتربط وقت التسليم جنب <slug>.malaf.pro
   const hosts = `${slug}.malaf.pro${customDomain ? ` + ${customDomain}` : ''}`;
@@ -339,6 +358,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
         <label className="block"><span className="text-xs font-bold text-slate-600">الرابط النهائي</span><input dir="ltr" className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs" value={liveUrl} onChange={(e) => setLiveUrl(e.target.value)} onBlur={() => liveUrl !== (order.live_url || '') && save({ live_url: liveUrl || null })} placeholder={`https://${slug}.malaf.pro`} /></label>
       </div>
       <label className="block text-sm"><span className="text-xs font-bold text-slate-600">ملاحظاتك</span><textarea className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" rows={2} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} onBlur={() => adminNotes !== (order.admin_notes || '') && save({ admin_notes: adminNotes || null })} /></label>
+      <label className="block text-sm"><span className="text-xs font-bold text-slate-600">فريق المكتب {order.package !== 'vip' && <span className="font-normal text-slate-400">(ميزة باقة المكتب المتكامل)</span>}</span><textarea className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" rows={3} value={teamText} onChange={(e) => setTeamText(e.target.value)} onBlur={saveTeam} placeholder={'سطر لكل عضو: الاسم — الصفة — نبذة قصيرة (اختياري)\nأ. منى فؤاد — محامية بالنقض — متخصصة في قضايا الأسرة'} /><span className="text-[10px] text-slate-400">بيظهر في صفحة «من نحن» في موقع المحامي بعد إعادة البناء</span></label>
 
       {/* Cloud build */}
       <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">

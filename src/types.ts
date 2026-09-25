@@ -3,7 +3,6 @@ export interface PricingPackage {
   name: string;
   badge: string;
   price: string;
-  originalPrice: string;
   recommended?: boolean;
   ctaText: string;
   features: { text: string; included: boolean }[];

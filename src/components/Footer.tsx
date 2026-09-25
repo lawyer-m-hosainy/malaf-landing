@@ -1,6 +1,7 @@
 import { Scale, Phone, MessageCircle, ExternalLink, Zap } from 'lucide-react';
 import { useUserIntent } from '../context/UserIntentContext';
 import {
+  BOT_ORDER_LINK,
   BRAND_NAME,
   BRAND_TAGLINE,
   BRAND_DESCRIPTION,
@@ -15,10 +16,9 @@ import {
 
 const QUICK_LINKS = [
   { href: '#hero', label: 'الرئيسية' },
-  { href: '#live-demo', label: 'النموذج الحي' },
-  { href: '#features', label: 'المميزات' },
-  { href: '#pricing', label: `عرض الـ ${OFFER_PRICE} والباقات` },
-  { href: '#portfolio', label: 'أنماط التصميم' },
+  { href: '#showcase', label: 'الأنماط والنموذج' },
+  { href: '#how-it-works', label: 'إزاي بنشتغل' },
+  { href: '#pricing', label: 'الباقات' },
   { href: '#faq', label: 'الأسئلة الشائعة' },
 ];
 
@@ -99,10 +99,12 @@ export default function Footer() {
             </ul>
             <div className="pt-2">
               <a
-                href="#contact-form"
+                href={BOT_ORDER_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block px-4 py-2 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-200 transition-colors"
               >
-                اطلب موقعك بعرض الـ {OFFER_PRICE} ←
+                اطلب موقعك على واتساب ←
               </a>
             </div>
           </div>

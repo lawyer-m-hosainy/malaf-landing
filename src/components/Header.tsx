@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Scale, Menu, X, PhoneCall, ChevronLeft } from 'lucide-react';
 import { useUserIntent } from '../context/UserIntentContext';
-import { BRAND_NAME, BRAND_TAGLINE, OFFER_PRICE } from '../data/content';
+import { BOT_ORDER_LINK, BRAND_NAME, BRAND_TAGLINE } from '../data/content';
 
 const NAV_LINKS = [
-  { href: '#live-demo', label: 'النموذج الحي' },
-  { href: '#features', label: 'المميزات' },
-  { href: '#how-it-works', label: 'كيف نعمل' },
-  { href: '#pricing', label: 'الأسعار' },
-  { href: '#portfolio', label: 'أنماط التصميم' },
+  { href: '#showcase', label: 'الأنماط والنموذج' },
+  { href: '#how-it-works', label: 'إزاي بنشتغل' },
+  { href: '#why', label: 'ليه مَلَف' },
+  { href: '#pricing', label: 'الباقات' },
   { href: '#faq', label: 'الأسئلة الشائعة' },
-  { href: '/order', label: 'اطلب موقعك' },
 ];
 
 export default function Header() {
@@ -81,20 +79,20 @@ export default function Header() {
           </a>
           <a
             id="header-cta-btn"
-            href="#contact-form"
+            href={BOT_ORDER_LINK} target="_blank" rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-lg text-sm font-black bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 hover:from-amber-400 hover:to-amber-300 shadow-md shadow-amber-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 text-center"
           >
-            اطلب موقعك بـ {OFFER_PRICE}
+            اطلب موقعك على واتساب
           </a>
         </div>
 
         {/* Mobile actions */}
         <div className="flex sm:hidden items-center gap-2">
           <a
-            href="#contact-form"
+            href={BOT_ORDER_LINK} target="_blank" rel="noopener noreferrer"
             className="px-3 py-2 text-xs font-black rounded-lg bg-amber-400 text-slate-950 whitespace-nowrap"
           >
-            اطلب بـ {OFFER_PRICE}
+            اطلب موقعك
           </a>
           <button
             type="button"
@@ -129,11 +127,11 @@ export default function Header() {
           ))}
           <div className="pt-3 mt-2 border-t border-slate-200 flex flex-col gap-2">
             <a
-              href="#contact-form"
+              href={BOT_ORDER_LINK} target="_blank" rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full py-3 rounded-lg text-sm font-black bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 text-center shadow-md shadow-amber-500/20"
             >
-              اطلب موقعك بعرض الـ {OFFER_PRICE}
+              اطلب موقعك على واتساب
             </a>
             <a
               href={currentWhatsAppUrl}
