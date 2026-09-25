@@ -281,7 +281,7 @@ function OrderDetail({ order, onChange }: { order: OrderRow; onChange: () => voi
       : `بعد موافقتك تُسدَّد الدفعة الثانية (50% المتبقية من ${PRICES[order.package] || ''} ج.م) وننشر الموقع على دومينك خلال يوم عمل.`;
   const msgPreview = `أستاذ/ة ${L.displayName || ''}، نسخة المعاينة من موقعكم جاهزة: ${previewUrl || '[رابط المعاينة]'}
 تصفّحها من الموبايل والكمبيوتر، وابعتلنا أي تعديلات. ${payLine}`;
-  const msgDelivered = `مبروك! موقعكم أصبح منشوراً على: ${liveUrl || `https://${slug}.malaf.pro`}\nأي تعديل على النصوص أو الصور خلال أول 7 أيام مجاناً — ابعتهولنا هنا.`;
+  const msgDelivered = `مبروك! موقعكم أصبح منشوراً على: ${liveUrl || `https://${slug}.malaf.pro`}\nولو محتاج تعديلات على النصوص أو الصور أو الألوان، عندك جولة تعديلات مجانية — ابعتهالنا هنا مرة واحدة.`;
 
 
   return (
