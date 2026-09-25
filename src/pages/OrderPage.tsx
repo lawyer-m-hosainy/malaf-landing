@@ -143,7 +143,9 @@ function AttachAssets({ code }: { code: string }) {
       if (logo) assets.logo = await upload(logo, 'logo');
       if (photo) assets.photo = await upload(photo, 'photo');
       const { data, error: rpcErr } = await supabase.rpc('attach_order_assets', { p_code: code, p_assets: assets });
-      if (rpcErr || !data) throw new Error('كود الطلب غير صحيح أو الطلب تم تسليمه بالفعل — راسلنا على واتساب');
+      // attach_order_assets بيضيف صورة ناقصة بس — لو الشعار/الصورة اترفعوا قبل كده التغيير بيتم عن طريقنا
+      if (rpcErr || !data)
+        throw new Error('ماقدرناش نضيف الصور: يا إما الكود غلط، أو الطلب اتسلّم، أو الصورة دي اترفعت قبل كده. لو عايز تغيّر صورة ابعتهالنا على واتساب ونغيّرها لك.');
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ، حاول مرة أخرى');
